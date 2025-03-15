@@ -1,8 +1,22 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { messaging, onMessage } from "../../../../firebase-config"; // Ajusta la ruta según tu estructura
 import { usePetViewModel } from "../ViewModel/pet.viewmodel";
 
 const CuyoDashboard = () => {
     const { stats } = usePetViewModel();
+
+    useEffect(() => {
+        Notification.requestPermission().then((permission) => {
+            if (permission === "granted") {
+                console.log("Permiso concedido para notificaciones");
+            }
+        });
+
+        onMessage(messaging, (payload) => {
+            console.log("Notificación recibida:", payload);
+            alert(`🔔 ${payload.notification.title}: ${payload.notification.body}`);
+        });
+    }, []);
 
     return (
         <div className="min-h-screen bg-gray-100">
@@ -19,7 +33,7 @@ const CuyoDashboard = () => {
 
                     {stats && (
                         <>
-                              {/* Mostrar cuántas veces se detectó movimiento */}
+                            {/* Mostrar cuántas veces se detectó movimiento */}
                             <div className="mb-4 text-lg font-bold">
                                 🚨 Movimiento Detectado: {stats.calcularMovimientoDetectado()} veces
                             </div>
