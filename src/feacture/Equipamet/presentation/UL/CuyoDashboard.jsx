@@ -1,10 +1,14 @@
-import React, { useEffect } from "react";
-import { messaging, onMessage } from "../../../../firebase-config"; // Ajusta la ruta según tu estructura
-import { usePetViewModel } from "../ViewModel/pet.viewmodel";
+import React, { useEffect, useState } from "react";
+import { usePetViewModel } from "../../domain/UseCase/usePetViewModel";
+import Header from "./Header";  
+import ProgressBar from "./ProgressBar";  
+import TempChart from "./TempChart";  
 
 const CuyoDashboard = () => {
     const { stats } = usePetViewModel();
+    const [socketMessage, setSocketMessage] = useState("");
 
+    // Notificaciones de movimiento
     useEffect(() => {
         Notification.requestPermission().then((permission) => {
             if (permission === "granted") {
@@ -12,17 +16,14 @@ const CuyoDashboard = () => {
             }
         });
 
-        onMessage(messaging, (payload) => {
-            console.log("Notificación recibida:", payload);
-            alert(`🔔 ${payload.notification.title}: ${payload.notification.body}`);
-        });
-    }, []);
+        if (stats && stats.calcularMovimientoDetectado() > 0) {
+            alert("Movimiento detectado en tu mascota!");
+        }
+    }, [stats]);
 
     return (
         <div className="min-h-screen bg-gray-100">
-            <header className="bg-orange-500 text-white p-4 flex justify-between items-center shadow-md">
-                <h1 className="text-2xl font-bold">🐹 Cuyo Monitor</h1>
-            </header>
+            <Header />
             <main className="p-6 flex flex-col items-center">
                 <section className="w-full max-w-3xl bg-white p-6 rounded-lg shadow-md">
                     <h2 className="text-xl font-semibold text-gray-700 mb-4">📹 Video en Vivo</h2>
@@ -37,6 +38,12 @@ const CuyoDashboard = () => {
                             <div className="mb-4 text-lg font-bold">
                                 🚨 Movimiento Detectado: {stats.calcularMovimientoDetectado()} veces
                             </div>
+
+                            {/* Barra de carga para el movimiento */}
+                            <ProgressBar value={stats.calcularMovimientoDetectado()} />
+
+                            {/* Gráfico de temperatura */}
+                            <TempChart temperatureData={stats.temperatureData} />
 
                             {/* Lista de registros */}
                             <ul className="w-full bg-gray-50 p-4 rounded-lg shadow">
