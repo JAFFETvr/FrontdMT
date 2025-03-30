@@ -1,6 +1,6 @@
 import { loginRepository } from "../../data/Repository/login.repository";
 
-export const GetApprovedUsers = async () => {
+export const GetApprovedUsersList = async () => {
     try {
         const users = await loginRepository.getApprovedUsers();
         return users;

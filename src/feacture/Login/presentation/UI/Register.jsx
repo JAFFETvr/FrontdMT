@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { createUser } from "../../data/DataSource/register.api"; // Cambiado a createUser
+import { createUser } from "../../data/DataSource/register.api";
+import Swal from 'sweetalert2';
+import 'sweetalert2/dist/sweetalert2.min.css';
 
 const RegisterSection = () => {
     const navigate = useNavigate();
-    const [userData, setUserData] = useState({ username: "", password_hash: "" });  // Cambiado a password_hash
+    const [userData, setUserData] = useState({ username: "", password_hash: "" });
     const [error, setError] = useState(null);
 
     const handleChange = (e) => {
@@ -13,15 +15,24 @@ const RegisterSection = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError(null); // Limpiar errores previos
+        setError(null);
 
         try {
-            await createUser(userData); // Cambiado a createUser
-            alert("Usuario creado exitosamente.");
-            navigate("/admin"); // Redirige al panel de administración
-            setUserData({ username: "", password_hash: "" }); // Limpia el estado después de la creación
+            await createUser(userData);
+            Swal.fire({  // Utilizar SweetAlert2
+                icon: 'success',
+                title: '¡Usuario Creado!',
+                text: 'El usuario ha sido creado exitosamente.',
+            });
+            navigate("/admin");
+            setUserData({ username: "", password_hash: "" });
         } catch (err) {
-            setError(err.message); // Muestra un mensaje de error
+            setError(err.message);
+            Swal.fire({ // Utilizar SweetAlert2 para errores
+                icon: 'error',
+                title: '¡Error!',
+                text: err.message,
+            });
         }
     };
 

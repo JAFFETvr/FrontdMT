@@ -1,5 +1,7 @@
 import React from "react";
 import { useAdminViewModel } from "../ViewModel/Admin.viewmodel";
+import Swal from "sweetalert2";
+import 'sweetalert2/dist/sweetalert2.min.css';
 
 const AdminPanel = () => {
     const { requests, error, approveUser } = useAdminViewModel();
@@ -20,8 +22,7 @@ const AdminPanel = () => {
                             <li key={user.id} className="flex justify-between items-center p-2 border-b">
                                 <span>{user.username}</span>
                                 <button
-                                    onClick={() => approveUser(user.id)}  // Pass the MAC address to approveUser
-
+                                    onClick={() => approveUser(user.id)}
                                     className="bg-green-500 text-white px-4 py-1 rounded hover:bg-green-600"
                                 >
                                     Aprobar
