@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { registerUser } from "../../data/DataSource/register.api";
+import { createUser } from "../../data/DataSource/register.api"; // Cambiado a createUser
 
 const RegisterSection = () => {
     const navigate = useNavigate();
-    const [userData, setUserData] = useState({ username: "", password: "" });
+    const [userData, setUserData] = useState({ username: "", password_hash: "" });  // Cambiado a password_hash
     const [error, setError] = useState(null);
 
     const handleChange = (e) => {
@@ -16,19 +16,20 @@ const RegisterSection = () => {
         setError(null); // Limpiar errores previos
 
         try {
-            await registerUser(userData);
-            alert("Registro exitoso. Ahora puedes iniciar sesión.");
-            navigate("/login");
+            await createUser(userData); // Cambiado a createUser
+            alert("Usuario creado exitosamente.");
+            navigate("/admin"); // Redirige al panel de administración
+            setUserData({ username: "", password_hash: "" }); // Limpia el estado después de la creación
         } catch (err) {
-            setError(err.message);
+            setError(err.message); // Muestra un mensaje de error
         }
     };
 
     return (
         <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-orange-300 to-yellow-200">
             <div className="bg-white p-10 rounded-3xl shadow-2xl w-96 text-center transform transition duration-300 hover:scale-105">
-                <h2 className="text-4xl font-bold text-gray-700 mb-6">Regístrate</h2>
-                <p className="text-gray-600 mb-4">Crea tu cuenta para gestionar a tu pequeño amigo</p>
+                <h2 className="text-4xl font-bold text-gray-700 mb-6">Crear Usuario</h2>
+                <p className="text-gray-600 mb-4">Crea un nuevo usuario con privilegios</p>
 
                 {error && <p className="text-red-500 mb-4">{error}</p>}
 
@@ -44,10 +45,10 @@ const RegisterSection = () => {
                     />
                     <input
                         type="password"
-                        name="password"
-                        value={userData.password}
+                        name="password_hash" // Cambiado a password_hash
+                        value={userData.password_hash} // Cambiado a password_hash
                         onChange={handleChange}
-                        placeholder="Contraseña"
+                        placeholder="Contraseña (Hash)"  // Indicando que debe ser el hash
                         className="border-2 border-gray-300 p-3 rounded-lg focus:border-orange-500 focus:outline-none"
                         required
                     />
@@ -55,7 +56,7 @@ const RegisterSection = () => {
                     <div className="flex justify-between mt-4">
                         <button
                             type="button"
-                            onClick={() => navigate("/login")}
+                            onClick={() => navigate("/login")}  // Redirige al panel de administración
                             className="w-1/2 bg-gray-300 text-gray-800 p-3 rounded-lg hover:bg-gray-400 transition duration-300 mr-2"
                         >
                             Volver
@@ -63,9 +64,10 @@ const RegisterSection = () => {
 
                         <button
                             type="submit"
+                            onClick={() => navigate("/login")} 
                             className="w-1/2 bg-orange-600 text-white p-3 rounded-lg hover:bg-orange-700 transition duration-300"
                         >
-                            Registrarse
+                            Crear Usuario
                         </button>
                     </div>
                 </form>

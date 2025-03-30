@@ -1,15 +1,22 @@
-const API_URL = "http://localhost:8080"; 
+const API_URL = "http://localhost:8080";
 
-export const registerUser = async (username, password) => {
+export const createUser = async (userData) => {
     try {
-        const response = await fetch(`${API_URL}/register`, {
+        const response = await fetch(`${API_URL}/register`, {  // Cambiado el endpoint a /create_user
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username, password }),
+            body: JSON.stringify(userData), // Enviar el objeto userData completo (username y password_hash)
         });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || "Error al crear usuario");
+        }
+
         return await response.json();
     } catch (error) {
-        console.error("Error al registrar usuario:", error);
+        console.error("Error al crear usuario:", error);
+        throw error; // Propaga el error para que el componente pueda manejarlo
     }
 };
 

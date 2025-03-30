@@ -20,7 +20,8 @@ const AdminPanel = () => {
                             <li key={user.id} className="flex justify-between items-center p-2 border-b">
                                 <span>{user.username}</span>
                                 <button
-                                    onClick={() => approveUser(user.id)}
+                                    onClick={() => approveUser(user.id)}  // Pass the MAC address to approveUser
+
                                     className="bg-green-500 text-white px-4 py-1 rounded hover:bg-green-600"
                                 >
                                     Aprobar

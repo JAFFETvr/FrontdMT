@@ -1,9 +1,13 @@
-export const loginAPI = async (credentials) => {
-    const response = await fetch("https://", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(credentials)
-    });
-    if (!response.ok) throw new Error("Error en el inicio de sesión");
-    return response.json();
+const API_URL = "http://localhost:8080";
+
+export const getApprovedUsers = async () => {
+    try {
+        const response = await fetch(`${API_URL}/approve`);  // Endpoint para obtener usuarios aprobados
+        if (!response.ok) {
+            throw new Error("Error al obtener la lista de usuarios aprobados");
+        }
+        return await response.json();
+    } catch (error) {
+        throw error;
+    }
 };

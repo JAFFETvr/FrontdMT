@@ -15,8 +15,9 @@ export const useAdminViewModel = () => {
         try {
             const data = await adminRepository.getRequests();
             setRequests(data.map(AdminRequest.fromJSON));
+            setError(null); // Clear any previous errors on successful fetch
         } catch (err) {
-            setError("Error al obtener solicitudes pendientes.");
+            setError(`Error al obtener solicitudes pendientes: ${err.message}`); // Muestra el mensaje específico
         }
     };
 
@@ -27,8 +28,9 @@ export const useAdminViewModel = () => {
         try {
             await approveUserUseCase(id, mac);
             fetchRequests(); // Recargar lista después de aprobar
+            setError(null); // Clear any previous errors on successful approve
         } catch (err) {
-            setError("Error al aprobar usuario.");
+            setError(`Error al aprobar usuario: ${err.message}`); // Muestra el mensaje específico
         }
     };
 
