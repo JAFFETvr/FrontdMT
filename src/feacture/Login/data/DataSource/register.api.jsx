@@ -2,10 +2,10 @@ const API_URL = "http://localhost:8080";
 
 export const createUser = async (userData) => {
     try {
-        const response = await fetch(`${API_URL}/register`, {  // Cambiado el endpoint a /create_user
+        const response = await fetch(`${API_URL}/register`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(userData), // Enviar el objeto userData completo (username y password_hash)
+            body: JSON.stringify(userData), 
         });
 
         if (!response.ok) {

@@ -19,7 +19,7 @@ const RegisterSection = () => {
 
         try {
             await createUser(userData);
-            Swal.fire({  // Utilizar SweetAlert2
+            Swal.fire({
                 icon: 'success',
                 title: '¡Usuario Creado!',
                 text: 'El usuario ha sido creado exitosamente.',
@@ -28,7 +28,7 @@ const RegisterSection = () => {
             setUserData({ username: "", password_hash: "" });
         } catch (err) {
             setError(err.message);
-            Swal.fire({ // Utilizar SweetAlert2 para errores
+            Swal.fire({
                 icon: 'error',
                 title: '¡Error!',
                 text: err.message,

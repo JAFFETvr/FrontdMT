@@ -8,7 +8,6 @@ const LoginSection = () => {
 
     return (
         <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-yellow-300 to-orange-200">
-            {/* Botón de "Ingresar como Admin" */}
             <button
                 onClick={() => navigate("/adminLogin")}
                 className="absolute top-4 right-4 bg-orange-500 text-white p-2 rounded-md hover:bg-orange-700"
@@ -39,9 +38,7 @@ const LoginSection = () => {
                         required
                     />
 
-                    {/* Botones de acción */}
                     <div className="flex justify-between mt-4">
-                        {/* Botón de registro */}
                         <button
                             type="button"
                             onClick={() => navigate("/register")}

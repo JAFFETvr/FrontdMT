@@ -1,5 +1,5 @@
-import { getApprovedUsers } from "../DataSource/login.api"; // Importa la función para obtener la lista de usuarios aprobados
+import { getApprovedUsers } from "../DataSource/login.api"; 
 
 export const loginRepository = {
-    getApprovedUsers: getApprovedUsers // Exporta la función
+    getApprovedUsers: getApprovedUsers 
 };
