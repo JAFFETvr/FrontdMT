@@ -1,10 +1,12 @@
 import React, { useEffect, useState, useRef } from "react";
 import DataSource from "../../data/DataSource/videapi";
 import Header from "./Header";
-import { FaCamera, FaMoon, FaHome, FaBookOpen, FaSpinner } from "react-icons/fa"; 
-import { MdErrorOutline, MdSignalWifiOff } from "react-icons/md"; 
+import { FaCamera, FaMoon, FaHome, FaBookOpen, FaSpinner } from "react-icons/fa";
+import { MdErrorOutline, MdSignalWifiOff } from "react-icons/md";
 
+// --- useWebSocketService hook remains the same ---
 const useWebSocketService = () => {
+    // ... (tu código del hook sin cambios) ...
     const [imageSrc, setImageSrc] = useState("");
     const [status, setStatus] = useState("Initializing...");
     const socketRef = useRef(null);
@@ -31,6 +33,7 @@ const useWebSocketService = () => {
 
             currentSocket.onmessage = (event) => {
                  if (typeof event.data === 'string') {
+                    // Basic check for likely base64 image data
                     if (event.data.length > 100 && !event.data.includes(' ') && event.data.match(/^[A-Za-z0-9+/=]+$/)) {
                          setImageSrc(`data:image/jpeg;base64,${event.data}`);
                      } else {
@@ -40,6 +43,7 @@ const useWebSocketService = () => {
                      const reader = new FileReader();
                      reader.onload = () => {
                          if (typeof reader.result === 'string') {
+                             // Extract base64 part from Data URL
                              const base64String = reader.result.split(',')[1];
                               if (base64String) {
                                 setImageSrc(`data:image/jpeg;base64,${base64String}`);
@@ -66,87 +70,108 @@ const useWebSocketService = () => {
 
             currentSocket.onclose = (event) => {
                 console.log("WebSocket closed:", event.reason, event.code);
-                 setImageSrc("");
-                 if (socketRef.current === currentSocket) {
+                 setImageSrc(""); // Clear image on close
+                 const isCurrentSocket = socketRef.current === currentSocket; // Check if this is the current socket before nulling
+
+                 // Determine status based on close event
+                 let closeStatus = "Desconectado.";
+                 if (!event.wasClean) {
+                    // Standard codes that usually don't warrant automatic reconnect attempts
+                    const nonRetryCodes = [1000, 1001, 1005, 1006, 1008, 1011]; // Added more standard codes
+                    if (!nonRetryCodes.includes(event.code)) {
+                        closeStatus = `Conexión perdida (${event.code}). Reconectando en 5s...`;
+                        // Only schedule reconnect if this was the active socket
+                         if (isCurrentSocket) {
+                             const timerId = setTimeout(connectWebSocket, 5000);
+                             // Store timer to clear it on unmount if needed (though cleanup should handle socket closure)
+                             // You might want a way to manage this timer across reconnects/unmounts
+                         }
+                    } else {
+                        closeStatus = `Conexión cerrada (${event.code} - ${event.reason || 'Sin razón específica'}).`;
+                    }
+                 }
+                 setStatus(closeStatus);
+
+                 // Nullify the ref *after* potentially scheduling a reconnect
+                 if (isCurrentSocket) {
                     socketRef.current = null;
                  }
-
-                 if (event.wasClean) {
-                    setStatus("Desconectado.");
-                } else {
-                     if (![1000, 1001, 1005, 1006].includes(event.code)) {
-                         setStatus("Desconectado. Reconectando en 5s...");
-                         const timerId = setTimeout(connectWebSocket, 5000);
-                     } else {
-                         setStatus(`Conexión cerrada (${event.code}).`);
-                     }
-                }
             };
         };
 
         connectWebSocket();
 
+        // Cleanup function
         return () => {
              const currentSocket = socketRef.current;
              if (currentSocket) {
-                 console.log("Cleaning up WebSocket connection.");
+                 console.log("Cleaning up WebSocket connection on unmount.");
+                 // Prevent further events triggering state updates on unmounted component
                  currentSocket.onopen = null;
                  currentSocket.onmessage = null;
                  currentSocket.onerror = null;
-                 currentSocket.onclose = null;
-                 if (currentSocket.readyState === WebSocket.OPEN) {
+                 currentSocket.onclose = null; // Important to prevent reconnect logic firing after unmount
+                 if (currentSocket.readyState === WebSocket.OPEN || currentSocket.readyState === WebSocket.CONNECTING) {
                      currentSocket.close(1000, "Component unmounting");
                  }
-                 socketRef.current = null;
+                 socketRef.current = null; // Ensure ref is cleared
              }
+             // Clear any pending reconnect timers if you store them
+             // clearTimeout(reconnectTimerId);
         };
-    }, []);
+    }, []); // Empty dependency array ensures this runs only once on mount
 
     return { imageSrc, status };
 };
+// --- Fin del hook useWebSocketService ---
 
 
 const VideoMascota = () => {
     const { imageSrc, status } = useWebSocketService();
 
     const getStatusColor = (currentStatus) => {
+        // ... (sin cambios) ...
         if (currentStatus.includes("Conectado")) return "text-green-600";
-        if (currentStatus.includes("Error") || currentStatus.includes("no configurada") || currentStatus.includes("cerrada")) return "text-red-600";
-        if (currentStatus.includes("Desconectado")) return "text-orange-500";
+        if (currentStatus.includes("Error") || currentStatus.includes("no configurada") || currentStatus.includes("cerrada") || currentStatus.includes("perdida")) return "text-red-600";
+        if (currentStatus.includes("Desconectado") || currentStatus.includes("Reconectando")) return "text-orange-500";
         if (currentStatus.includes("Conectando") || currentStatus.includes("Initializing")) return "text-blue-600";
         return "text-gray-500";
     };
 
     const renderPlaceholderIcon = () => {
-        if (status.includes("Error") || status.includes("cerrada") || status.includes("no configurada")) {
+        // ... (sin cambios) ...
+        if (status.includes("Error") || status.includes("cerrada") || status.includes("no configurada") || status.includes("perdida")) {
             return <MdErrorOutline className="h-8 w-8 text-red-400 mb-2" />;
         }
-        if (status.includes("Desconectado")) {
+        if (status.includes("Desconectado") || status.includes("Reconectando")) {
             return <MdSignalWifiOff className="h-8 w-8 text-orange-400 mb-2" />;
         }
          if (status.includes("Conectando") || status.includes("Initializing")) {
             return <FaSpinner className="animate-spin h-7 w-7 text-blue-500 mb-2" />;
         }
-        return null; 
+        return null;
     };
 
-
+    const pdfPath = "/pdfs/HAMSTER.pdf"; 
+    const pdfFilename = "CuidadoDeLHamster.pdf"; 
     return (
         <>
             <Header />
             <div className="flex justify-center p-4 sm:p-6 lg:p-8">
                 <div className="w-full max-w-2xl bg-white p-5 md:p-6 rounded-xl shadow-xl border border-gray-300 flex flex-col items-center">
 
-                    {/* Título con icono de react-icons */}
-                    <h2 className="text-xl font-semibold text-gray-800 mb-4 text-center flex items-center justify-center gap-2"> {/* Añadido flex, items-center, gap-2 */}
-                        <FaCamera className="text-gray-700" /> 
+                    {/* Título */}
+                    <h2 className="text-xl font-semibold text-gray-800 mb-4 text-center flex items-center justify-center gap-2">
+                        <FaCamera className="text-gray-700" />
                         Monitoreo del Hámster
                     </h2>
 
+                    {/* Estado Conexión */}
                     <div className={`text-center mb-4 text-sm font-medium ${getStatusColor(status)}`}>
                         Estado Conexión: {status}
                     </div>
 
+                    {/* Video o Placeholder */}
                     <div className="w-full aspect-video bg-gray-900 rounded-lg flex items-center justify-center overflow-hidden border border-gray-400 relative shadow-inner mb-5">
                         {imageSrc ? (
                             <img
@@ -156,37 +181,40 @@ const VideoMascota = () => {
                             />
                         ) : (
                             <div className="flex flex-col items-center text-gray-500 p-4">
-                                {renderPlaceholderIcon()} 
+                                {renderPlaceholderIcon()}
                                 <span className="text-center text-sm">
-                                    {status.includes("Error") || status.includes("Desconectado") || status.includes("cerrada") || status.includes("no configurada")
+                                    {status.includes("Error") || status.includes("Desconectado") || status.includes("cerrada") || status.includes("no configurada") || status.includes("perdida")
                                      ? "Señal de video no disponible"
                                      : "Cargando video..."}
                                 </span>
                             </div>
                         )}
                     </div>
-                    <div className="w-full border-t border-gray-300 pt-5 mt-4 text-sm text-gray-700 flex flex-col items-center space-y-4">
 
+                    <div className="w-full border-t border-gray-300 pt-5 mt-4 text-sm text-gray-700 flex flex-col items-center space-y-4">
                         <div className="text-center space-y-2">
-                            <p className="text-xs text-gray-600 italic flex items-center justify-center gap-1.5"> {/* Añadido flex, items-center, gap-1.5 */}
-                                <FaMoon className="text-gray-500" /> 
+                            <p className="text-xs text-gray-600 italic flex items-center justify-center gap-1.5">
+                                <FaMoon className="text-gray-500" />
                                 Recuerda: Los hámsters son nocturnos, ¡quizás esté durmiendo!
                             </p>
-                            <p className="text-xs text-gray-600 italic flex items-center justify-center gap-1.5"> {/* Añadido flex, items-center, gap-1.5 */}
-                                <FaHome className="text-gray-500" /> 
+                            <p className="text-xs text-gray-600 italic flex items-center justify-center gap-1.5">
+                                <FaHome className="text-gray-500" />
                                 Les encanta explorar y necesitan espacio para roer y esconderse.
                             </p>
                         </div>
-                         <div className="flex justify-center space-x-3 pt-2">
-                             <button
-                                type="button"
-                                onClick={() => alert('Función "Ver Guía" no implementada aún.')}
-                                className="px-4 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-800 text-xs font-medium rounded-md shadow-sm transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 flex items-center gap-1.5" // Añadido flex, items-center, gap-1.5
-                                title="Abrir guía de cuidados para hámsters"
+
+                        <div className="flex justify-center space-x-3 pt-2">
+                            <a 
+                                href={pdfPath} 
+                                download={pdfFilename}
+                                className="px-4 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-800 text-xs font-medium rounded-md shadow-sm transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 flex items-center gap-1.5" // Mismas clases de estilo
+                                title="Descargar guía de cuidados para hámsters" 
+                                target="_blank" 
+                                rel="noopener noreferrer" 
                              >
-                                <FaBookOpen /> 
+                                <FaBookOpen />
                                 Guía
-                             </button>
+                             </a>
                          </div>
                     </div>
 

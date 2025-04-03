@@ -7,11 +7,6 @@ const LoginSection = () => {
     const { credentials, handleChange, handleSubmit } = useLoginViewModel();
     const navigate = useNavigate();
 
-    // --- Ya no necesitas estas variables para las clases de color ---
-    // const accentColor = "orange-500";
-    // const accentHoverColor = "orange-600";
-    // const focusRingColor = "orange-500";
-    // --- Puedes mantenerlas si las usas para otra cosa, pero no para las clases ---
 
     const titleFontWeight = "font-bold";
     const titleFontSize = "text-3xl";

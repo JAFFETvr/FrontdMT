@@ -14,7 +14,7 @@ const Header = () => {
 
                     <div className="flex-shrink-0 flex items-center gap-2">
                          <FaPaw className="h-6 w-6 text-orange-500" />
-                         <NavLink to="/main" className="font-bold text-lg text-gray-800 hover:text-orange-600 transition duration-150 ease-in-out">
+                         <NavLink to="/login" className="font-bold text-lg text-gray-800 hover:text-orange-600 transition duration-150 ease-in-out">
                              Mi Hámster App
                          </NavLink>
                     </div>
