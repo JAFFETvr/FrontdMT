@@ -38,7 +38,7 @@ const RegisterSection = () => {
                 title: '¡Se mando la solicitud ',
                 text: 'Espera que el administrador la apruebe',
                 timer: 2500,
-                showConfirmButton: false
+                showConfirmButton: false    
             });
             navigate("/login"); 
 
