@@ -24,7 +24,7 @@ const RegisterSection = () => {
                 title: '¡Usuario Creado!',
                 text: 'El usuario ha sido creado exitosamente.',
             });
-            navigate("/admin");
+            navigate("/login");
             setUserData({ username: "", password_hash: "" });
         } catch (err) {
             setError(err.message);
