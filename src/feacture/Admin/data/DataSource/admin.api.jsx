@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:8080"; // Ajusta según tu backend
+const API_URL = "http://18.209.134.24:8080"; // Ajusta según tu backend
 
 // Obtener usuarios pendientes
 export const getPendingRequests = async () => {

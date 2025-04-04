@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:8080";
+const API_URL = "http://18.209.134.24:8080";
 
 export const getApprovedUsers = async () => {
     try {
