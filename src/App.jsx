@@ -6,6 +6,7 @@ import CuyoDashboard from './feacture/Equipamet/presentation/UL/CuyoDashboard'
 import RegisterSection from './feacture/Login/presentation/UI/Register'
 import AdminPanel from './feacture/Admin/presentation/UL/AdminPanel';
 import VideoMascota from './feacture/Equipamet/presentation/UL/videoMascota';
+import PrincipalPgina from './feacture/Home/organismo/Pricnipal';
 
 
 function App() {
@@ -22,7 +23,7 @@ function App() {
                 <Route path="/register" element={<RegisterSection />} />
                 <Route path="/admin" element={<AdminPanel />} />
                 <Route path="/monitoreo" element={<VideoMascota/>} />
-                <Route path="/" element={<LoginSection />} />
+                <Route path="/" element={<PrincipalPgina />} />
             </Routes>
         </Router>
      </div> 
