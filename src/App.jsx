@@ -4,9 +4,9 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import LoginSection from './feacture/Login/presentation/UI/LoginSection'
 import CuyoDashboard from './feacture/Equipamet/presentation/UL/CuyoDashboard'
 import RegisterSection from './feacture/Login/presentation/UI/Register'
-import AdminPanel from './feacture/Admin/presentation/UL/AdminPanel';
 import VideoMascota from './feacture/Equipamet/presentation/UL/videoMascota';
 import PrincipalPgina from './feacture/Home/organismo/Pricnipal';
+import AdminPanel from './feacture/Admin/presentation/UL/AdminPanel';
 
 
 function App() {

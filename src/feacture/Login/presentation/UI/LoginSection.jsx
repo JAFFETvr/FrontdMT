@@ -39,7 +39,6 @@ const LoginSection = () => {
                             value={credentials.username}
                             onChange={handleChange}
                             placeholder="Usuario"
-                            // Usa la clase de color completa directamente para el focus ring
                             className="border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent w-full text-sm"
                             required
                         />
@@ -49,7 +48,6 @@ const LoginSection = () => {
                             value={credentials.password}
                             onChange={handleChange}
                             placeholder="Contraseña"
-                            // Usa la clase de color completa directamente para el focus ring
                             className="border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent w-full text-sm"
                             required
                         />
