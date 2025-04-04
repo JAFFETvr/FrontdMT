@@ -1,82 +1,94 @@
-// components/CuyoDashboard/TempChart.jsx
 import React from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { FaThermometerHalf } from 'react-icons/fa';
 
 const TempChart = ({ temperatureData }) => {
-    // The data is now formatted in usePetViewModel, passed as temperatureData prop
-    // Ensure temperatureData is an array before proceeding
-    const formattedData = Array.isArray(temperatureData) ? temperatureData : [];
+    // Los datos ('temperatureData') vienen formateados desde usePetViewModel
+    // Cada elemento debe tener { time: string, temp: number | null }
+    const chartData = Array.isArray(temperatureData) ? temperatureData : [];
 
-    if (formattedData.length === 0) {
+    console.log("Renderizando TempChart con datos:", chartData); // Log para ver qué recibe
+
+    // --- Mensaje si no hay datos ---
+    if (chartData.length === 0) {
         return (
-            <div className="text-center text-gray-500 py-10 border border-gray-200 rounded-lg h-[300px] flex flex-col justify-center items-center">
-                 <FaThermometerHalf className="mx-auto text-3xl mb-2 text-gray-400"/>
-                 Esperando datos de temperatura...
+            <div className="text-center text-gray-500 py-10 border border-dashed border-gray-300 rounded-lg h-[340px] flex flex-col justify-center items-center bg-gray-50 shadow-inner">
+                 <FaThermometerHalf className="mx-auto text-4xl mb-3 text-gray-400"/>
+                 <span className='font-semibold text-gray-600'>Esperando datos de temperatura...</span>
+                 <span className='text-sm mt-1 text-gray-500'>(La gráfica aparecerá aquí)</span>
              </div>
         );
     }
 
-    // Calculate Y-axis domain based on the received data
-    const temps = formattedData.map(d => d.temp).filter(t => typeof t === 'number' && !isNaN(t)); // Filter out non-numeric temps
-    const minTemp = temps.length > 0 ? Math.min(...temps) : 15; // Default min if no data
-    const maxTemp = temps.length > 0 ? Math.max(...temps) : 30; // Default max if no data
-    const yDomainMargin = 1;
-    // Ensure domain is valid numbers
-    const yDomain = [
-        isNaN(minTemp) ? 15 : Math.floor(minTemp - yDomainMargin),
-        isNaN(maxTemp) ? 30 : Math.ceil(maxTemp + yDomainMargin)
-    ];
-    // Prevent domain from being identical [n, n] which causes errors
-    if (yDomain[0] === yDomain[1]) {
-        yDomain[0] -= 1;
-        yDomain[1] += 1;
+    // --- Cálculo del Dominio Y (para ajustar la escala) ---
+    const validTemps = chartData
+        .map(d => d.temp) // Extrae las temperaturas (pueden ser null)
+        .filter(t => typeof t === 'number' && !isNaN(t)); // Filtra solo números válidos
+
+    let yDomain = ['auto', 'auto']; // Deja que Recharts decida por defecto
+    if (validTemps.length > 0) {
+        const minTemp = Math.min(...validTemps);
+        const maxTemp = Math.max(...validTemps);
+        const margin = Math.max(1, (maxTemp - minTemp) * 0.1); // Un margen pequeño
+        // Define un dominio con algo de espacio arriba y abajo
+        yDomain = [
+            Math.floor(minTemp - margin),
+            Math.ceil(maxTemp + margin)
+        ];
+        // Asegura que el dominio no sea idéntico si solo hay un valor
+        if (yDomain[0] === yDomain[1]) {
+            yDomain[0] -= 1;
+            yDomain[1] += 1;
+        }
     }
+    console.log("TempChart: Dominio Y:", yDomain);
 
-
+    // --- Renderizado de la Gráfica ---
     return (
-        <div className="w-full border border-gray-200 rounded-lg p-4">
+        <div className="w-full border border-gray-200 rounded-lg p-4 shadow-sm bg-white">
             <h2 className="text-lg font-semibold text-gray-700 mb-4 text-center flex items-center justify-center gap-2">
                  <FaThermometerHalf className="text-blue-500"/>
                  Temperatura Ambiente (°C)
             </h2>
-
             <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={formattedData} margin={{ top: 5, right: 20, left: -15, bottom: 5 }}> {/* Adjusted left margin */}
+                <LineChart data={chartData} margin={{ top: 5, right: 25, left: -10, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
                     <XAxis
-                        dataKey="time" // Uses 'time' field from formattedData
-                        tick={{ fontSize: 11, fill: '#666' }}
+                        dataKey="time" // CLAVE DEL EJE X (debe coincidir con el hook)
+                        tick={{ fontSize: 10, fill: '#666' }}
                         axisLine={{ stroke: '#ccc' }}
                         tickLine={{ stroke: '#ccc' }}
-                        // Optional: Add more ticks if needed, or format time differently
-                        // interval={'preserveStartEnd'} // Example: Show first and last ticks
+                        // Considera interval={...} o angle={...} si tienes muchos puntos o etiquetas largas
                     />
                     <YAxis
-                        domain={yDomain} // Dynamic domain based on data
+                        domain={yDomain} // Dominio calculado o 'auto'
                         tick={{ fontSize: 12, fill: '#666' }}
                         axisLine={{ stroke: '#ccc' }}
                         tickLine={{ stroke: '#ccc' }}
                         tickFormatter={(value) => `${value}°`}
-                        allowDecimals={false} // No decimal ticks on Y axis
+                        allowDecimals={false}
                     />
                     <Tooltip
-                        contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.95)', borderRadius: '8px', borderColor: '#ccc', padding: '8px 12px' }}
-                        labelStyle={{ fontWeight: 'bold', color: '#333', marginBottom: '4px' }}
-                        itemStyle={{ color: '#3182CE' }}
-                        formatter={(value, name, props) => [`${value.toFixed(1)}°C`, "Temperatura"]} // Format value in tooltip
-                        // labelFormatter={(label) => `Time: ${label}`} // Customize label if needed
+                        contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.95)', borderRadius: '8px', borderColor: '#ccc', padding: '8px 12px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}
+                        labelStyle={{ fontWeight: 'bold', color: '#333', marginBottom: '4px', fontSize: '13px' }}
+                        itemStyle={{ color: '#3182CE', fontSize: '12px' }}
+                        // Muestra N/A en tooltip si temp es null
+                        formatter={(value, name, props) => [
+                            `${typeof value === 'number' ? value.toFixed(1) : 'N/A'}°C`,
+                            "Temperatura" // Nombre en el tooltip
+                        ]}
                     />
-                     <Legend verticalAlign="top" height={36} iconType="line"/>
+                    <Legend verticalAlign="top" height={36} iconType="line"/>
                     <Line
                         type="monotone"
-                        dataKey="temp" // Uses 'temp' field from formattedData
-                        name="Temperatura" // Name for Legend and Tooltip
-                        stroke="#3182CE"
-                        strokeWidth={2}
-                        dot={{ r: 3, fill: '#3182CE', strokeWidth: 1, stroke: '#fff' }} // Smaller dots
-                        activeDot={{ r: 5, strokeWidth: 0 }}
-                        isAnimationActive={false} // Disable animation for real-time feel, enable if preferred
+                        dataKey="temp" // CLAVE DEL EJE Y (debe coincidir con el hook)
+                        name="Temperatura" // Nombre para leyenda/tooltip
+                        stroke="#3182CE" // Color línea
+                        strokeWidth={2.5}
+                        dot={{ r: 3, fill: '#3182CE', strokeWidth: 1, stroke: '#fff' }}
+                        activeDot={{ r: 6, stroke: 'rgba(49, 130, 206, 0.3)', strokeWidth: 6 }}
+                        connectNulls={false} // NO conectar puntos si hay un 'null' entre ellos
+                        // isAnimationActive={false} // Desactivar animación si los datos llegan muy rápido
                     />
                 </LineChart>
             </ResponsiveContainer>
