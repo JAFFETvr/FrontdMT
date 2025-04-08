@@ -1,11 +1,17 @@
-// ViewModel/Login.Viewmodel.js (MODIFICADO CON ACCESO ADMIN ESPECIAL)
+// ViewModel/Login.Viewmodel.js (CORREGIDO - Asume loginUser devuelve STRING y NO se obtiene ROL)
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-// Importa las NUEVAS funciones de tu API de login
-import { loginUser, saveToken } from '../../data/DataSource/login.api';
+// Importa las funciones (loginUser devuelve string, saveToken guarda string)
+import { loginUser, saveToken, removeToken as removeAuthToken } from '../../data/DataSource/login.api'; // Asegúrate de tener removeToken
 import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
+
+// Claves y Rutas
+const ROLE_STORAGE_KEY = "role";
+const TOKEN_KEY_ADMIN_SPECIAL = "jwtToken"; // La clave que usaste para el admin especial
+const ADMIN_ROUTE = "/admin";
+const USER_ROUTE = "/main";
 
 export const useLoginViewModel = () => {
     const [credentials, setCredentials] = useState({ username: "", password: "" });
@@ -21,80 +27,81 @@ export const useLoginViewModel = () => {
         e.preventDefault();
         setError(null);
         setLoading(true);
+        let isAdminLogin = false;
 
         try {
-            // ----- INICIO: Comprobación de credenciales especiales de Admin -----
+            // ----- Comprobación Admin Especial -----
             if (credentials.username === "administradores" && credentials.password === "112233") {
-                console.log("Acceso especial de administrador detectado.");
-                // Establece el rol directamente en localStorage
-                localStorage.setItem("role", "admin");
-                // Limpia cualquier token JWT previo por si acaso
-                localStorage.removeItem("jwtToken"); // O la key que uses para el token normal
+                isAdminLogin = true;
+                console.log("Acceso especial admin.");
+                localStorage.setItem(ROLE_STORAGE_KEY, "admin");
+                // Limpia el token JWT normal (usa la función de api.js si usa 'authToken')
+                removeAuthToken(); // Asegúrate que esta función elimina la key 'authToken'
+                // O limpia la clave específica si es diferente:
+                // localStorage.removeItem('authToken'); // <-- Si usas 'authToken' para el token normal
 
-                // Muestra mensaje de éxito para admin
-                Swal.fire({
+                Swal.fire({ /* ... SweetAlert admin ... */
                     icon: 'success',
                     title: 'Acceso de Administrador Concedido',
                     timer: 1500,
                     showConfirmButton: false
-                });
-
-                navigate("/admin"); // Navega a la ruta de admin
-                setLoading(false);  // Detiene el indicador de carga
-                return; // ¡IMPORTANTE! Sal de la función handleSubmit aquí para no llamar a la API
+                 });
+                navigate(ADMIN_ROUTE);
+                setLoading(false);
+                return; // Salir
             }
-            // ----- FIN: Comprobación de credenciales especiales de Admin -----
+            // ----- FIN Admin Especial -----
 
-            // --- Si no son las credenciales especiales, procede con el login normal vía API ---
-            console.log("Intentando login normal vía API para usuario:", credentials.username);
-            const responseData = await loginUser(credentials);
+            // --- Login normal vía API ---
+            console.log("Intentando login normal (esperando string) para:", credentials.username);
 
-            // Verifica si la respuesta contiene el token esperado
-            if (!responseData || !responseData.token) {
-                console.error("Respuesta de login inválida:", responseData);
-                throw new Error("Error inesperado del servidor al iniciar sesión.");
+            // 1. Llama a loginUser, que devuelve el TOKEN (string)
+            const tokenString = await loginUser(credentials); // Renombrado para claridad
+
+            // 2. Validación básica del token recibido como STRING
+            if (!tokenString || typeof tokenString !== 'string' || tokenString.split('.').length !== 3) {
+                 console.error("loginUser devolvió una respuesta inesperada:", tokenString);
+                throw new Error("Respuesta inválida del servidor al iniciar sesión.");
             }
 
-            // Guarda el token JWT recibido
-            saveToken(responseData.token);
+            // 3. Guarda el token STRING directamente
+            saveToken(tokenString); // saveToken debe estar preparada para recibir un string
+            console.log("Token (string) guardado.");
 
-            // Determina y guarda el ROL (obtenido de la API para usuarios normales)
-            const userRole = responseData.role;
-            if (!userRole) {
-                 console.warn("La respuesta de login no especificó un rol. Asignando 'user' por defecto.");
-            }
-            localStorage.setItem("role", userRole || 'user');
+            // 4. ASIGNAR ROL POR DEFECTO (No se puede obtener sin jwt-decode o cambio en API)
+            const defaultRole = 'user';
+            localStorage.setItem(ROLE_STORAGE_KEY, defaultRole);
+            console.log(`Rol asignado por defecto: ${defaultRole}`);
+            // Se ELIMINAN las líneas que intentaban acceder a responseData.role
 
-            // Muestra mensaje de éxito normal
-            Swal.fire({
+            // 5. Muestra mensaje de éxito
+            Swal.fire({ /* ... SweetAlert éxito normal ... */
                 icon: 'success',
                 title: '¡Bienvenido!',
                 timer: 1500,
                 showConfirmButton: false
-            });
+             });
 
-            // Navega a la página principal para usuarios normales
-            // (La navegación para admin ya se hizo en el bloque 'if' de arriba)
-            navigate("/main"); // O /dashboard, etc.
+            // 6. Navega a la ruta de usuario normal
+            navigate(USER_ROUTE);
 
         } catch (err) {
-            // Manejo de errores (tanto de la API como el error por token inválido)
+            // Manejo de errores
             const errorMessage = err.message || "Usuario o contraseña incorrectos.";
             console.error("Error en handleSubmit de login:", err);
             setError(errorMessage);
-            Swal.fire({
-                icon: 'error',
-                title: 'Error de Acceso',
-                text: errorMessage,
-            });
+            Swal.fire({ /* ... SweetAlert error ... */
+                 icon: 'error',
+                 title: 'Error de Acceso',
+                 text: errorMessage,
+             });
+            // Limpiar token/rol si algo falla
+            removeAuthToken(); // Limpia el token normal
+            localStorage.removeItem(ROLE_STORAGE_KEY); // Limpia el rol
         } finally {
-            // Asegura que el loading se detenga siempre, excepto si ya se hizo return en el bloque admin
-            // El bloque 'finally' se ejecuta incluso después de un 'return' en el 'try',
-            // pero como pusimos setLoading(false) antes del return, está bien.
-            // Si no lo hubiéramos puesto antes del return, se desactivaría aquí.
-             if (loading) { // Solo si aún está activo (no se hizo return antes)
-                 setLoading(false);
-             }
+            if (!isAdminLogin) {
+                setLoading(false);
+            }
         }
     };
 

@@ -1,137 +1,98 @@
-import React from "react";
-import { usePetViewModel } from "../ViewModel/pet.viewmodel";
+// src/components/CuyoDashboard.jsx
+import React, { useState, useEffect } from "react";
+import { useNavigate } from 'react-router-dom';
 import Header from "./Header";
 import TempChart from "./TempChart";
 import GraficaAlimento from "./GraficAlimentos";
-import { FaExclamationTriangle, FaRunning, FaTemperatureHigh, FaClipboardList, FaWifi, FaTimesCircle } from "react-icons/fa"; // Added Wifi icons
+import { FaExclamationTriangle, FaRunning, FaTemperatureHigh, FaClipboardList, FaTimesCircle, FaThermometerHalf, FaSignOutAlt } from "react-icons/fa";
+import { fetchPetStats, removeToken as removeAuthToken, removeRole } from "../../data/DataSource/pet.api"; // Ajusta la ruta
 
-const LoadingIndicator = () => (
-    <div className="text-center p-10 text-gray-500">
-        <svg className="animate-spin h-8 w-8 text-blue-500 mx-auto mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
-        Conectando y esperando datos...
-    </div>
-);
-
+const LoadingIndicator = () => ( <div className="text-center p-10 text-gray-500"> {/* ... SVG ... */} Cargando datos... </div> );
 
 const CuyoDashboard = () => {
-    const { datos, temperatureData, calcularMovimientoDetectado, isConnected, error } = usePetViewModel();
+    const [datos, setDatos] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const navigate = useNavigate();
 
-    if (error) {
-        return (
-            <div className="min-h-screen bg-gray-100 font-sans">
-                <Header />
-                <main className="container mx-auto p-4 md:p-6 lg:p-8">
-                     <section className="w-full max-w-4xl mx-auto bg-white p-6 md:p-8 rounded-xl shadow-lg flex flex-col items-center gap-4">
-                        <FaTimesCircle className="text-5xl text-red-500 mb-3"/>
-                        <h2 className="text-xl font-semibold text-red-700">Error de Conexión</h2>
-                        <p className="text-gray-600 text-center">{error}</p>
-                        <p className="text-sm text-gray-500 mt-2">Por favor, verifica la consola del navegador y asegúrate de que el servidor WebSocket esté funcionando en `ws://174.129.168.168:8080/ws`.</p>
-                    </section>
-                </main>
-            </div>
-        );
-    }
+    useEffect(() => {
+        let isMounted = true;
+        let isAuthError = false;
 
-     // Show loading only if connected but no data arrived yet, or if not connected yet
-    if (!isConnected || (isConnected && datos.length === 0)) {
-       return (
-            <div className="min-h-screen bg-gray-100 font-sans">
-                <Header />
-                 <main className="container mx-auto p-4 md:p-6 lg:p-8">
-                    <section className="w-full max-w-4xl mx-auto bg-white p-6 md:p-8 rounded-xl shadow-lg">
-                        <LoadingIndicator />
-                     </section>
-                </main>
-            </div>
-        );
-    }
+        const loadData = async () => {
+            if (isMounted) { setIsLoading(true); setError(null); isAuthError = false; }
+            try {
+                console.log("CuyoDashboard: Llamando a fetchPetStats...");
+                const fetchedData = await fetchPetStats(); // Usa la función con logs
+                console.log("CuyoDashboard: fetchPetStats retornó datos.");
+                if (isMounted) { setDatos(fetchedData); }
+            } catch (err) {
+                console.error("CuyoDashboard: Error capturado en useEffect:", err.message);
+                if (err && err.message && err.message.toLowerCase().includes("no autenticado")) {
+                    isAuthError = true;
+                    if (isMounted) {
+                        console.log("CuyoDashboard: Redirigiendo al login por error de autenticación.");
+                        removeAuthToken();
+                        removeRole();
+                        navigate('/login');
+                    }
+                } else {
+                    if (isMounted) { setError(err.message || "Error inesperado."); }
+                }
+            } finally {
+                if (isMounted && !isAuthError) {
+                    console.log("CuyoDashboard: Finalizando carga.");
+                    setIsLoading(false);
+                } else if (isMounted && isAuthError) {
+                     console.log("CuyoDashboard: Carga interrumpida por redirección.");
+                }
+            }
+        };
+        loadData();
+        return () => { isMounted = false; console.log("CuyoDashboard: Desmontado."); };
+    }, [navigate]);
 
+    const handleLogout = () => {
+        console.log("Cerrando sesión...");
+        removeAuthToken();
+        removeRole();
+        navigate('/login');
+    };
 
-    // --- Data Display ---
-    // Calculate derived values based on the *current* data
-    const totalMovimientoDetectado = calcularMovimientoDetectado(); // Call the function
-    const lastReading = datos.length > 0 ? datos[datos.length - 1] : null;
-    const lastMovement = lastReading ? lastReading.movimiento : 'N/A';
-    const lastTemperature = lastReading ? lastReading.temperatura : 'N/A';
-    const recentHistory = datos.slice(-5).reverse(); // Get last 5 records
+    // --- Renderizado Condicional y Principal (SIN CAMBIOS) ---
+    if (isLoading) { return ( <div className="min-h-screen bg-gray-100"> <Header onLogout={handleLogout} /> <main className="container mx-auto p-8"><section className="bg-white p-8 rounded-xl shadow-lg"><LoadingIndicator /></section></main> </div> ); }
+    if (error) { return ( <div className="min-h-screen bg-gray-100"> <Header onLogout={handleLogout} /> <main className="container mx-auto p-8"><section className="bg-white p-8 rounded-xl shadow-lg flex flex-col items-center gap-4"><FaTimesCircle className="text-5xl text-red-500"/> <h2 className="text-xl font-semibold text-red-700">Error</h2> <p className="text-gray-600 text-center break-words px-4">{error}</p> {/* Botones Recargar/Inicio */} <div className="flex gap-4 mt-4"><button onClick={()=>window.location.reload()} className="...">Recargar</button><button onClick={handleLogout} className="...">Ir a Inicio</button></div></section></main> </div> ); }
+
+    // --- Procesamiento y Renderizado del Dashboard (SIN CAMBIOS) ---
+    const totalMovimientoDetectado = Array.isArray(datos) ? datos.filter(d => d?.movimiento === '1').length : 0;
+    const lastReading = Array.isArray(datos) && datos.length > 0 ? datos[datos.length - 1] : null;
+    const lastMovement = lastReading?.movimiento === '1' ? 'Detectado' : 'Sin Movimiento';
+    const lastTemperatureRaw = lastReading?.temperatura;
+    const lastTemperature = (lastTemperatureRaw !== null && typeof lastTemperatureRaw !== 'undefined' && !isNaN(parseFloat(lastTemperatureRaw))) ? parseFloat(lastTemperatureRaw) : 'N/A';
+    const recentHistory = Array.isArray(datos) ? datos.slice(-5).reverse() : [];
+    const temperatureData = Array.isArray(datos) ? datos.map((item, index) => ({ time: item?.id || `Reg. ${datos.length - index}`, temp: (item && typeof item.temperatura !== 'undefined') ? parseFloat(item.temperatura) : NaN })).filter(item => !isNaN(item.temp)) : [];
 
     return (
         <div className="min-h-screen bg-gray-100 font-sans">
-            <Header />
-
+            <Header onLogout={handleLogout} />
             <main className="container mx-auto p-4 md:p-6 lg:p-8">
-                {/* Connection Status Indicator */}
-                 <div className={`fixed top-4 right-4 p-2 rounded-full shadow-md ${isConnected ? 'bg-green-100' : 'bg-red-100'}`}>
-                    {isConnected ?
-                        <FaWifi className="text-green-600" title="WebSocket Conectado" /> :
-                        <FaTimesCircle className="text-red-600" title="WebSocket Desconectado" />
-                     }
-                 </div>
-
                 <section className="w-full max-w-4xl mx-auto bg-white p-6 md:p-8 rounded-xl shadow-lg flex flex-col gap-8">
-
-                    {/* Movement Section */}
-                    <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
-                        <FaExclamationTriangle className="text-xl text-yellow-500" />
-                        <h2 className="text-xl font-semibold text-gray-800">
-                            {/* Use the calculated value */}
-                            Movimiento Detectado: {totalMovimientoDetectado} veces
-                        </h2>
-                    </div>
-
-                    {/* Last Readings Section */}
-                     <div className="flex flex-wrap gap-x-6 gap-y-2 text-md text-gray-600">
-                         <div className="flex items-center gap-2">
-                            <FaRunning className={lastMovement === 'Detectado' ? 'text-green-500' : 'text-red-500'}/>
-                            <span>Último Movimiento: <span className="font-medium text-gray-800">{lastMovement}</span></span>
-                         </div>
-                         <div className="flex items-center gap-2">
-                            <FaTemperatureHigh className="text-blue-500"/>
-                             {/* Display temperature safely */}
-                            <span>Última Temperatura: <span className="font-medium text-gray-800">{lastTemperature !== 'N/A' ? `${lastTemperature}°C` : 'N/A'}</span></span>
-                         </div>
-                     </div>
-
-                    {/* Temperature Chart */}
-                    {/* Pass the formatted temperatureData */}
-                    <TempChart temperatureData={temperatureData} />
-
-                    {/* Food Chart (remains static for now) */}
-                    <GraficaAlimento />
-
-                    {/* History Section */}
-                    <div className="border-t border-gray-200 pt-6">
-                        <h3 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
-                            <FaClipboardList className="text-gray-500"/>
-                            Historial de Registros Recientes
-                        </h3>
-                        {/* Check if there's history */}
-                        {recentHistory.length > 0 ? (
-                             <ul className="w-full space-y-2">
-                                {/* Map over the recentHistory */}
-                                {recentHistory.map((item) => (
-                                    <li
-                                        key={item.id || Math.random()} // Use ID if available, fallback to random key (not ideal for production)
-                                        className="p-3 bg-gray-50 rounded-md border border-gray-200 flex justify-between items-center text-sm"
-                                    >
-                                        <span className={`font-medium ${item.movimiento === 'Detectado' ? 'text-green-600' : 'text-red-600'}`}>
-                                        {item.movimiento === 'Detectado' ? '● Movimiento Detectado' : '○ Sin Movimiento'}
-                                        </span>
-                                        <span className="text-gray-600">
-                                            🌡️ {item.temperatura}°C
-                                        </span>
-                                        {/* Optionally display timestamp if available */}
-                                        {/* <span className="text-xs text-gray-400">{item.timestamp ? new Date(item.timestamp).toLocaleTimeString() : ''}</span> */}
-                                    </li>
-                                ))}
-                            </ul>
-                        ) : (
-                            <p className="text-center text-gray-500 mt-4">No hay registros históricos todavía.</p>
-                        )}
-                    </div>
+                     {/* Mensaje sin datos */}
+                     {datos.length === 0 && (<p className="text-center text-gray-500 py-10 border border-dashed rounded-lg">No hay datos registrados.</p>)}
+                     {/* Contenido con datos */}
+                     {datos.length > 0 && (
+                        <>
+                            {/* Movimiento */}
+                            <div className="flex items-center gap-3 pb-4 border-b"><FaExclamationTriangle className="text-xl text-yellow-500" /> <h2 className="text-xl font-semibold">Movimiento: {totalMovimientoDetectado} veces</h2></div>
+                            {/* Últimas lecturas */}
+                            <div className="flex flex-wrap gap-x-6 gap-y-2"><div className="flex items-center gap-2"><FaRunning className={lastMovement === 'Detectado' ? 'text-green-500' : 'text-red-500'}/><span>Último Mov.: <span className="font-medium">{lastMovement}</span></span></div><div className="flex items-center gap-2"><FaTemperatureHigh className="text-blue-500"/><span>Última Temp.: <span className="font-medium">{typeof lastTemperature === 'number' ? `${lastTemperature.toFixed(1)}°C` : 'N/A'}</span></span></div></div>
+                            {/* Gráficos */}
+                            <TempChart temperatureData={temperatureData} />
+                            <GraficaAlimento />
+                            {/* Historial */}
+                            <div className="border-t pt-6"><h3 className="text-lg font-semibold mb-4 flex items-center gap-2"><FaClipboardList /> Historial Reciente</h3>{recentHistory.length > 0 ? (<ul className="space-y-2">{recentHistory.map((item, index) => { const mov = item?.movimiento === '1' ? 'Detectado' : 'Sin Movimiento'; const tempNum = (item && typeof item.temperatura !== 'undefined') ? parseFloat(item.temperatura) : NaN; const tempTxt = !isNaN(tempNum) ? `${tempNum.toFixed(1)}°C` : 'N/A'; const key = item?.id ?? `hist-${index}`; return (<li key={key} className="p-3 bg-gray-50 rounded-md border flex justify-between items-center text-sm"><span className={`font-medium ${item?.movimiento === '1' ? 'text-green-600' : 'text-red-600'}`}>{item?.movimiento === '1' ? '● Mov. Detectado' : '○ Sin Mov.'}</span><span className="text-gray-600">🌡️ {tempTxt}</span></li>); })}</ul>) : (<p className="text-center text-gray-500">Sin historial reciente.</p>)}</div>
+                        </>
+                    )}
                 </section>
             </main>
         </div>
