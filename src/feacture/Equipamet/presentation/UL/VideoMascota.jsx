@@ -4,9 +4,7 @@ import Header from "./Header";
 import { FaCamera, FaMoon, FaHome, FaBookOpen, FaSpinner } from "react-icons/fa";
 import { MdErrorOutline, MdSignalWifiOff } from "react-icons/md";
 
-// --- useWebSocketService hook remains the same ---
 const useWebSocketService = () => {
-    // ... (tu código del hook sin cambios) ...
     const [imageSrc, setImageSrc] = useState("");
     const [status, setStatus] = useState("Initializing...");
     const socketRef = useRef(null);
@@ -33,7 +31,6 @@ const useWebSocketService = () => {
 
             currentSocket.onmessage = (event) => {
                  if (typeof event.data === 'string') {
-                    // Basic check for likely base64 image data
                     if (event.data.length > 100 && !event.data.includes(' ') && event.data.match(/^[A-Za-z0-9+/=]+$/)) {
                          setImageSrc(`data:image/jpeg;base64,${event.data}`);
                      } else {
@@ -43,7 +40,6 @@ const useWebSocketService = () => {
                      const reader = new FileReader();
                      reader.onload = () => {
                          if (typeof reader.result === 'string') {
-                             // Extract base64 part from Data URL
                              const base64String = reader.result.split(',')[1];
                               if (base64String) {
                                 setImageSrc(`data:image/jpeg;base64,${base64String}`);
@@ -70,21 +66,17 @@ const useWebSocketService = () => {
 
             currentSocket.onclose = (event) => {
                 console.log("WebSocket closed:", event.reason, event.code);
-                 setImageSrc(""); // Clear image on close
+                 setImageSrc(""); 
                  const isCurrentSocket = socketRef.current === currentSocket; // Check if this is the current socket before nulling
 
-                 // Determine status based on close event
                  let closeStatus = "Desconectado.";
                  if (!event.wasClean) {
-                    // Standard codes that usually don't warrant automatic reconnect attempts
                     const nonRetryCodes = [1000, 1001, 1005, 1006, 1008, 1011]; // Added more standard codes
                     if (!nonRetryCodes.includes(event.code)) {
                         closeStatus = `Conexión perdida (${event.code}). Reconectando en 5s...`;
-                        // Only schedule reconnect if this was the active socket
                          if (isCurrentSocket) {
                              const timerId = setTimeout(connectWebSocket, 5000);
-                             // Store timer to clear it on unmount if needed (though cleanup should handle socket closure)
-                             // You might want a way to manage this timer across reconnects/unmounts
+                            
                          }
                     } else {
                         closeStatus = `Conexión cerrada (${event.code} - ${event.reason || 'Sin razón específica'}).`;
@@ -92,7 +84,6 @@ const useWebSocketService = () => {
                  }
                  setStatus(closeStatus);
 
-                 // Nullify the ref *after* potentially scheduling a reconnect
                  if (isCurrentSocket) {
                     socketRef.current = null;
                  }
@@ -101,36 +92,31 @@ const useWebSocketService = () => {
 
         connectWebSocket();
 
-        // Cleanup function
         return () => {
              const currentSocket = socketRef.current;
              if (currentSocket) {
                  console.log("Cleaning up WebSocket connection on unmount.");
-                 // Prevent further events triggering state updates on unmounted component
                  currentSocket.onopen = null;
                  currentSocket.onmessage = null;
                  currentSocket.onerror = null;
-                 currentSocket.onclose = null; // Important to prevent reconnect logic firing after unmount
+                 currentSocket.onclose = null; 
                  if (currentSocket.readyState === WebSocket.OPEN || currentSocket.readyState === WebSocket.CONNECTING) {
                      currentSocket.close(1000, "Component unmounting");
                  }
-                 socketRef.current = null; // Ensure ref is cleared
+                 socketRef.current = null; 
              }
-             // Clear any pending reconnect timers if you store them
-             // clearTimeout(reconnectTimerId);
+             
         };
-    }, []); // Empty dependency array ensures this runs only once on mount
+    }, []); 
 
     return { imageSrc, status };
 };
-// --- Fin del hook useWebSocketService ---
 
 
 const VideoMascota = () => {
     const { imageSrc, status } = useWebSocketService();
 
     const getStatusColor = (currentStatus) => {
-        // ... (sin cambios) ...
         if (currentStatus.includes("Conectado")) return "text-green-600";
         if (currentStatus.includes("Error") || currentStatus.includes("no configurada") || currentStatus.includes("cerrada") || currentStatus.includes("perdida")) return "text-red-600";
         if (currentStatus.includes("Desconectado") || currentStatus.includes("Reconectando")) return "text-orange-500";
@@ -139,7 +125,6 @@ const VideoMascota = () => {
     };
 
     const renderPlaceholderIcon = () => {
-        // ... (sin cambios) ...
         if (status.includes("Error") || status.includes("cerrada") || status.includes("no configurada") || status.includes("perdida")) {
             return <MdErrorOutline className="h-8 w-8 text-red-400 mb-2" />;
         }
@@ -160,18 +145,15 @@ const VideoMascota = () => {
             <div className="flex justify-center p-4 sm:p-6 lg:p-8">
                 <div className="w-full max-w-2xl bg-white p-5 md:p-6 rounded-xl shadow-xl border border-gray-300 flex flex-col items-center">
 
-                    {/* Título */}
                     <h2 className="text-xl font-semibold text-gray-800 mb-4 text-center flex items-center justify-center gap-2">
                         <FaCamera className="text-gray-700" />
                         Monitoreo del Hámster
                     </h2>
 
-                    {/* Estado Conexión */}
                     <div className={`text-center mb-4 text-sm font-medium ${getStatusColor(status)}`}>
                         Estado Conexión: {status}
                     </div>
 
-                    {/* Video o Placeholder */}
                     <div className="w-full aspect-video bg-gray-900 rounded-lg flex items-center justify-center overflow-hidden border border-gray-400 relative shadow-inner mb-5">
                         {imageSrc ? (
                             <img

@@ -1,4 +1,3 @@
-// src/components/TempChart.jsx
 import React from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { FaThermometerHalf } from 'react-icons/fa';

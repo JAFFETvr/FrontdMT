@@ -35,8 +35,8 @@ export const useLoginViewModel = () => {
             if (credentials.username === "administradores" && credentials.password === "112233") {
                 isAdminLogin = true;
                 console.log("ViewModel: Acceso especial admin detectado.");
-                removeAuthToken(); // Llama a la función importada que usa 'authToken'
-                saveRole("admin"); // Usa la función importada
+                removeAuthToken(); 
+                saveRole("admin"); 
 
                 Swal.fire({
                     icon: 'success',

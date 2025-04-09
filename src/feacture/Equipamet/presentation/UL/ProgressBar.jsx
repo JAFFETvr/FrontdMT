@@ -1,23 +1,19 @@
-// components/CuyoDashboard/ProgressBar.jsx
 import React from 'react';
 
 /**
- * A simple progress bar component.
- * @param {object} props - Component props.
- * @param {number} props.value - The current value.
- * @param {number} [props.max=100] - The maximum value.
+ * @param {object} 
+ * @param {number}
+ * @param {number} [props.max=100] .
  */
 const ProgressBar = ({ value = 0, max = 100 }) => {
-    // Calculate percentage, ensuring it's between 0 and 100
     const percentage = max > 0 ? Math.min(100, Math.max(0, (value / max) * 100)) : 0;
 
-    // Choose color based on percentage (example)
-    let barColorClass = "bg-gradient-to-r from-green-400 to-green-600"; // Default green
+    let barColorClass = "bg-gradient-to-r from-green-400 to-green-600";
     if (percentage < 50) {
-        barColorClass = "bg-gradient-to-r from-yellow-400 to-yellow-600"; // Yellow if less than 50%
+        barColorClass = "bg-gradient-to-r from-yellow-400 to-yellow-600"; 
     }
     if (percentage < 20) {
-        barColorClass = "bg-gradient-to-r from-red-400 to-red-600"; // Red if less than 20%
+        barColorClass = "bg-gradient-to-r from-red-400 to-red-600"; 
     }
 
 
@@ -30,7 +26,7 @@ const ProgressBar = ({ value = 0, max = 100 }) => {
                 aria-valuenow={value}
                 aria-valuemin="0"
                 aria-valuemax={max}
-                aria-label="Progress" // Add accessibility label
+                aria-label="Progress"
             ></div>
         </div>
     );

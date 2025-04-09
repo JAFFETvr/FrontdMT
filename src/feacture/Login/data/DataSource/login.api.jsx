@@ -2,8 +2,7 @@
 const API_URL = "http://174.129.168.168:8080";
 
 export const TOKEN_KEY = 'authToken';
-// ---
-export const ROLE_STORAGE_KEY = "role"; // También exportamos esta si se usa en otros lados
+export const ROLE_STORAGE_KEY = "role"; 
 
 export const saveToken = (tokenString) => {
     if (tokenString && typeof tokenString === 'string') {
@@ -46,9 +45,9 @@ export const removeRole = () => {
 
 /**
 
- * @param {object} credentials - Objeto con { username: "...", password: "..." }.
- * @returns {Promise<object>} Una promesa que resuelve con el objeto JSON completo de la respuesta si el login es exitoso.
- * @throws {Error} Si el login falla, la respuesta no es OK, o no se puede parsear como JSON.
+ * @param {object} 
+ * @returns {Promise<object>} 
+ * @throws {Error} 
  */
 export const loginUser = async (credentials) => {
     const loginEndpoint = `${API_URL}/auth/login`;
@@ -58,7 +57,6 @@ export const loginUser = async (credentials) => {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                 // Es buena práctica indicar que aceptas JSON
                 "Accept": "application/json"
             },
             body: JSON.stringify(credentials)

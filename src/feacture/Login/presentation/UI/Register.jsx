@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-// Asegúrate que la importación apunte a la API actualizada
 import { createUser } from "../../data/DataSource/register.api";
 import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
